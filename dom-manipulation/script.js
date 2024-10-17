@@ -65,48 +65,107 @@
 
 // Array to store quotes
 
-
-// Array to hold quotes
-let quotes = [
-    { text: "The only way to do great work is to love what you do.", category: "Motivation" },
-    { text: "Life is what happens when you're busy making other plans.", category: "Life" },
-    { text: "You miss 100% of the shots you don’t take.", category: "Sports" },
-    { text: "The only limit to our realization of tomorrow is our doubts of today.", category: "Inspiration" },
-    { text: "Life is what happens when you're busy making other plans.", category: "Life" },
-    { text: "Do or do not, there is no try.", category: "Motivation" }
-];
-
-// Function to show a random quote
-function showRandomQuote() {
-    // Select a random quote from the array
-    let randomIndex = Math.floor(Math.random() * quotes.length);
-    let randomQuote = quotes[randomIndex];
-
-    // Display the random quote in the "quoteDisplay" div
-    let quoteDisplay = document.getElementById('quoteDisplay');
-    quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
+class Quote {
+    constructor(text, category) {
+        this.text = text;
+        this.category = category;
+    }
 }
 
-// Event listener for the "Show New Quote" button
-document.getElementById('newQuote').addEventListener('click', showRandomQuote);
+class QuoteManager {
+    constructor() {
+        this.quotes = [
+            new Quote("The only way to do great work is to love what you do.", "Motivation"),
+            new Quote("Life is what happens when you're busy making other plans.", "Life"),
+            new Quote("You miss 100% of the shots you don't take.", "Sports"),
+            new Quote("The only limit to our realization of tomorrow is our doubts of today.", "Inspiration"),
+            new Quote("Do or do not, there is no try.", "Motivation")
+        ];
+        this.initializeEventListeners();
+    }
 
-// Function to add a new quote
+    initializeEventListeners() {
+        // Event listener for showing new quote - checking both button and ID
+        const showNewQuoteBtn = document.querySelector('button#newQuote') || document.getElementById('newQuote');
+        if (showNewQuoteBtn) {
+            showNewQuoteBtn.addEventListener('click', () => this.showRandomQuote());
+            console.log('Show New Quote button listener attached');
+        } else {
+            console.error('Show New Quote button not found');
+        }
+    }
+
+    showRandomQuote() {
+        console.log('showRandomQuote called'); // Debug log
+        if (this.quotes.length === 0) {
+            this.showError('No quotes available');
+            return;
+        }
+
+        const randomIndex = Math.floor(Math.random() * this.quotes.length);
+        const randomQuote = this.quotes[randomIndex];
+        const quoteDisplay = document.getElementById('quoteDisplay');
+
+        if (quoteDisplay) {
+            console.log('Displaying quote:', randomQuote); // Debug log
+            quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
+        } else {
+            console.error('Quote display element not found');
+        }
+    }
+
+    addQuote() {
+        // Get input values
+        const newQuoteText = document.getElementById('newQuoteText');
+        const newQuoteCategory = document.getElementById('newQuoteCategory');
+
+        if (!newQuoteText || !newQuoteCategory) {
+            this.showError('Form elements not found');
+            return;
+        }
+
+        const text = newQuoteText.value.trim();
+        const category = newQuoteCategory.value.trim();
+
+        // Validate inputs
+        if (!text || !category) {
+            this.showError('Please enter both a quote and a category.');
+            return;
+        }
+
+        // Create and add new quote
+        const newQuote = new Quote(text, category);
+        this.quotes.push(newQuote);
+        console.log('New quote added:', newQuote); // Debug log
+
+        // Clear inputs
+        newQuoteText.value = '';
+        newQuoteCategory.value = '';
+
+        // Show success message
+        this.showSuccess('Quote added successfully!');
+    }
+
+    showSuccess(message) {
+        alert(message);
+    }
+
+    showError(message) {
+        alert(message);
+    }
+}
+
+// Initialize the quote manager
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing QuoteManager');
+    window.quoteManager = new QuoteManager();
+});
+
+// Export the addQuote function for the HTML button
 function addQuote() {
-    // Get the input values
-    let newQuoteText = document.getElementById('newQuoteText').value.trim();
-    let newQuoteCategory = document.getElementById('newQuoteCategory').value.trim();
-
-    // Check if both fields are filled
-    if (newQuoteText !== "" && newQuoteCategory !== "") {
-        // Add the new quote to the array
-        quotes.push({ text: newQuoteText, category: newQuoteCategory });
-
-        // Clear the input fields
-        document.getElementById('newQuoteText').value = "";
-        document.getElementById('newQuoteCategory').value = "";
-
-        alert("Quote added successfully!");
+    if (window.quoteManager) {
+        window.quoteManager.addQuote();
     } else {
-        alert("Please enter both a quote and a category.");
+        console.error('QuoteManager not initialized');
     }
 }
