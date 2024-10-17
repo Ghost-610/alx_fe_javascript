@@ -64,7 +64,6 @@
 // generateQuote();
 
 // Array to store quotes
-
 class Quote {
     constructor(text, category) {
         this.text = text;
@@ -84,8 +83,17 @@ class QuoteManager {
         this.initializeEventListeners();
     }
 
+    createAddQuoteForm() {
+        const formDiv = document.createElement('div');
+        formDiv.innerHTML = `
+        <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+        <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+        <button onclick="addQuote()">Add Quote</button>
+      `;
+        return formDiv;
+    }
+
     initializeEventListeners() {
-        // Event listener for showing new quote - checking both button and ID
         const showNewQuoteBtn = document.querySelector('button#newQuote') || document.getElementById('newQuote');
         if (showNewQuoteBtn) {
             showNewQuoteBtn.addEventListener('click', () => this.showRandomQuote());
@@ -96,7 +104,7 @@ class QuoteManager {
     }
 
     showRandomQuote() {
-        console.log('showRandomQuote called'); // Debug log
+        console.log('showRandomQuote called');
         if (this.quotes.length === 0) {
             this.showError('No quotes available');
             return;
@@ -107,7 +115,7 @@ class QuoteManager {
         const quoteDisplay = document.getElementById('quoteDisplay');
 
         if (quoteDisplay) {
-            console.log('Displaying quote:', randomQuote); // Debug log
+            console.log('Displaying quote:', randomQuote);
             quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
         } else {
             console.error('Quote display element not found');
@@ -115,7 +123,6 @@ class QuoteManager {
     }
 
     addQuote() {
-        // Get input values
         const newQuoteText = document.getElementById('newQuoteText');
         const newQuoteCategory = document.getElementById('newQuoteCategory');
 
@@ -127,22 +134,18 @@ class QuoteManager {
         const text = newQuoteText.value.trim();
         const category = newQuoteCategory.value.trim();
 
-        // Validate inputs
         if (!text || !category) {
             this.showError('Please enter both a quote and a category.');
             return;
         }
 
-        // Create and add new quote
         const newQuote = new Quote(text, category);
         this.quotes.push(newQuote);
-        console.log('New quote added:', newQuote); // Debug log
+        console.log('New quote added:', newQuote);
 
-        // Clear inputs
         newQuoteText.value = '';
         newQuoteCategory.value = '';
 
-        // Show success message
         this.showSuccess('Quote added successfully!');
     }
 
