@@ -175,18 +175,153 @@
 //     }
 // }
 
-// Quote class definition
-class Quote {
-    constructor(text, author, category) {
-        this.id = Date.now() + Math.random().toString(36).substr(2, 9);
-        this.text = text;
-        this.author = author;
-        this.category = category;
-        this.createdAt = new Date().toISOString();
-    }
-}
+// // Quote class definition
+// class Quote {
+//     constructor(text, author, category) {
+//         this.id = Date.now() + Math.random().toString(36).substr(2, 9);
+//         this.text = text;
+//         this.author = author;
+//         this.category = category;
+//         this.createdAt = new Date().toISOString();
+//     }
+// }
 
-// QuoteManager class to handle quote operations and storage
+// // QuoteManager class to handle quote operations and storage
+// class QuoteManager {
+//     constructor() {
+//         this.quotes = this.loadFromLocalStorage() || [];
+//         this.initializeEventListeners();
+//         this.renderQuotes();
+//     }
+
+//     // Storage Methods
+//     loadFromLocalStorage() {
+//         const storedQuotes = localStorage.getItem('quotes');
+//         return storedQuotes ? JSON.parse(storedQuotes) : null;
+//     }
+
+//     saveToLocalStorage() {
+//         localStorage.setItem('quotes', JSON.stringify(this.quotes));
+//         sessionStorage.setItem('lastModified', new Date().toISOString());
+//     }
+
+//     // Quote Management Methods
+//     addQuote(text, author, category) {
+//         const newQuote = new Quote(text, author, category);
+//         this.quotes.push(newQuote);
+//         this.saveToLocalStorage();
+//         this.renderQuotes();
+//     }
+
+//     deleteQuote(id) {
+//         this.quotes = this.quotes.filter(quote => quote.id !== id);
+//         this.saveToLocalStorage();
+//         this.renderQuotes();
+//     }
+
+//     // Import/Export Methods
+//     exportQuotes() {
+//         const dataStr = JSON.stringify(this.quotes, null, 2);
+//         const blob = new Blob([dataStr], { type: 'application/json' });
+//         const url = URL.createObjectURL(blob);
+
+//         const link = document.createElement('a');
+//         link.href = url;
+//         link.download = `quotes-${new Date().toISOString().split('T')[0]}.json`;
+//         document.body.appendChild(link);
+//         link.click();
+//         document.body.removeChild(link);
+//         URL.revokeObjectURL(url);
+//     }
+
+//     async importQuotes(file) {
+//         try {
+//             const text = await file.text();
+//             const importedQuotes = JSON.parse(text);
+
+//             if (Array.isArray(importedQuotes)) {
+//                 this.quotes = [...this.quotes, ...importedQuotes];
+//                 this.saveToLocalStorage();
+//                 this.renderQuotes();
+//                 return true;
+//             }
+//             return false;
+//         } catch (error) {
+//             console.error('Error importing quotes:', error);
+//             return false;
+//         }
+//     }
+
+//     // UI Methods
+//     renderQuotes() {
+//         const quotesContainer = document.getElementById('quotes-container');
+//         quotesContainer.innerHTML = '';
+
+//         this.quotes.forEach(quote => {
+//             const quoteElement = document.createElement('div');
+//             quoteElement.className = 'quote-card';
+//             quoteElement.innerHTML = `
+//                 <blockquote>
+//                     <p>${quote.text}</p>
+//                     <footer>
+//                         - ${quote.author}
+//                         <span class="category">${quote.category}</span>
+//                     </footer>
+//                 </blockquote>
+//                 <button class="delete-btn" data-id="${quote.id}">Delete</button>
+//             `;
+//             quotesContainer.appendChild(quoteElement);
+//         });
+//     }
+
+//     initializeEventListeners() {
+//         // Form submission handler
+//         document.getElementById('quote-form').addEventListener('submit', (e) => {
+//             e.preventDefault();
+//             const text = document.getElementById('quote-text').value;
+//             const author = document.getElementById('quote-author').value;
+//             const category = document.getElementById('quote-category').value;
+
+//             if (text && author) {
+//                 this.addQuote(text, author, category);
+//                 e.target.reset();
+//             }
+//         });
+
+//         // Delete button handler
+//         document.getElementById('quotes-container').addEventListener('click', (e) => {
+//             if (e.target.classList.contains('delete-btn')) {
+//                 const id = e.target.dataset.id;
+//                 this.deleteQuote(id);
+//             }
+//         });
+
+//         // Export button handler
+//         document.getElementById('export-btn').addEventListener('click', () => {
+//             this.exportQuotes();
+//         });
+
+//         // Import file handler
+//         document.getElementById('import-file').addEventListener('change', async (e) => {
+//             const file = e.target.files[0];
+//             if (file) {
+//                 const success = await this.importQuotes(file);
+//                 if (success) {
+//                     alert('Quotes imported successfully!');
+//                 } else {
+//                     alert('Error importing quotes. Please check the file format.');
+//                 }
+//                 e.target.value = ''; // Reset file input
+//             }
+//         });
+//     }
+// }
+
+// // Initialize the application
+// document.addEventListener('DOMContentLoaded', () => {
+//     new QuoteManager();
+// });
+
 class QuoteManager {
     constructor() {
         this.quotes = this.loadFromLocalStorage() || [];
@@ -194,130 +329,97 @@ class QuoteManager {
         this.renderQuotes();
     }
 
-    // Storage Methods
-    loadFromLocalStorage() {
-        const storedQuotes = localStorage.getItem('quotes');
-        return storedQuotes ? JSON.parse(storedQuotes) : null;
-    }
+    // ... (previous storage and quote management methods remain the same) ...
 
-    saveToLocalStorage() {
-        localStorage.setItem('quotes', JSON.stringify(this.quotes));
-        sessionStorage.setItem('lastModified', new Date().toISOString());
-    }
+    renderQuotes() {
+        const quoteDisplay = document.getElementById('quoteDisplay');
+        if (!quoteDisplay) return; // Guard clause in case element doesn't exist
 
-    // Quote Management Methods
-    addQuote(text, author, category) {
-        const newQuote = new Quote(text, author, category);
-        this.quotes.push(newQuote);
-        this.saveToLocalStorage();
-        this.renderQuotes();
-    }
-
-    deleteQuote(id) {
-        this.quotes = this.quotes.filter(quote => quote.id !== id);
-        this.saveToLocalStorage();
-        this.renderQuotes();
-    }
-
-    // Import/Export Methods
-    exportQuotes() {
-        const dataStr = JSON.stringify(this.quotes, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `quotes-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }
-
-    async importQuotes(file) {
-        try {
-            const text = await file.text();
-            const importedQuotes = JSON.parse(text);
-            
-            if (Array.isArray(importedQuotes)) {
-                this.quotes = [...this.quotes, ...importedQuotes];
-                this.saveToLocalStorage();
-                this.renderQuotes();
-                return true;
-            }
-            return false;
-        } catch (error) {
-            console.error('Error importing quotes:', error);
-            return false;
+        // Display the most recent quote
+        if (this.quotes.length > 0) {
+            const latestQuote = this.quotes[this.quotes.length - 1];
+            quoteDisplay.innerHTML = `
+                <blockquote>
+                    <p>${latestQuote.text}</p>
+                    <footer>
+                        ${latestQuote.author || 'Unknown'}
+                        <span class="category">${latestQuote.category}</span>
+                    </footer>
+                </blockquote>
+            `;
         }
     }
 
-    // UI Methods
-    renderQuotes() {
-        const quotesContainer = document.getElementById('quotes-container');
-        quotesContainer.innerHTML = '';
-
-        this.quotes.forEach(quote => {
-            const quoteElement = document.createElement('div');
-            quoteElement.className = 'quote-card';
-            quoteElement.innerHTML = `
-                <blockquote>
-                    <p>${quote.text}</p>
-                    <footer>
-                        - ${quote.author}
-                        <span class="category">${quote.category}</span>
-                    </footer>
-                </blockquote>
-                <button class="delete-btn" data-id="${quote.id}">Delete</button>
-            `;
-            quotesContainer.appendChild(quoteElement);
-        });
-    }
-
     initializeEventListeners() {
-        // Form submission handler
-        document.getElementById('quote-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = document.getElementById('quote-text').value;
-            const author = document.getElementById('quote-author').value;
-            const category = document.getElementById('quote-category').value;
-            
-            if (text && author) {
-                this.addQuote(text, author, category);
-                e.target.reset();
-            }
-        });
+        // New Quote button handler
+        const newQuoteBtn = document.getElementById('newQuote');
+        if (newQuoteBtn) {
+            newQuoteBtn.addEventListener('click', () => {
+                const randomQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
+                if (randomQuote) {
+                    const quoteDisplay = document.getElementById('quoteDisplay');
+                    quoteDisplay.innerHTML = `
+                        <blockquote>
+                            <p>${randomQuote.text}</p>
+                            <footer>
+                                ${randomQuote.author || 'Unknown'}
+                                <span class="category">${randomQuote.category}</span>
+                            </footer>
+                        </blockquote>
+                    `;
+                }
+            });
+        }
 
-        // Delete button handler
-        document.getElementById('quotes-container').addEventListener('click', (e) => {
-            if (e.target.classList.contains('delete-btn')) {
-                const id = e.target.dataset.id;
-                this.deleteQuote(id);
-            }
-        });
+        // Add Quote handler
+        const addQuoteBtn = document.querySelector('button[onclick="addQuote()"]');
+        if (addQuoteBtn) {
+            // Remove inline onclick handler and add event listener
+            addQuoteBtn.removeAttribute('onclick');
+            addQuoteBtn.addEventListener('click', () => {
+                const text = document.getElementById('newQuoteText')?.value;
+                const category = document.getElementById('newQuoteCategory')?.value;
+
+                if (text && category) {
+                    this.addQuote(text, 'Anonymous', category);
+                    document.getElementById('newQuoteText').value = '';
+                    document.getElementById('newQuoteCategory').value = '';
+                } else {
+                    alert('Please fill in both the quote and category fields');
+                }
+            });
+        }
 
         // Export button handler
-        document.getElementById('export-btn').addEventListener('click', () => {
-            this.exportQuotes();
-        });
+        const exportBtn = document.getElementById('export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => this.exportQuotes());
+        }
 
-        // Import file handler
-        document.getElementById('import-file').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const success = await this.importQuotes(file);
-                if (success) {
-                    alert('Quotes imported successfully!');
-                } else {
-                    alert('Error importing quotes. Please check the file format.');
+        // Import file handler - First add the file input if it doesn't exist
+        if (!document.getElementById('import-file')) {
+            const importFile = document.createElement('input');
+            importFile.type = 'file';
+            importFile.id = 'import-file';
+            importFile.accept = '.json';
+            importFile.style.display = 'none';
+            document.body.appendChild(importFile);
+        }
+
+        const importFile = document.getElementById('import-file');
+        if (importFile) {
+            importFile.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const success = await this.importQuotes(file);
+                    if (success) {
+                        alert('Quotes imported successfully!');
+                    } else {
+                        alert('Error importing quotes. Please check the file format.');
+                    }
+                    e.target.value = ''; // Reset file input
                 }
-                e.target.value = ''; // Reset file input
-            }
-        });
+            });
+        }
     }
 }
-
-// Initialize the application
-document.addEventListener('DOMContentLoaded', () => {
-    new QuoteManager();
-});
