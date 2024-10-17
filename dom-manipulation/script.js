@@ -64,111 +64,260 @@
 // generateQuote();
 
 // Array to store quotes
+
+
+// class Quote {
+//     constructor(text, category) {
+//         this.text = text;
+//         this.category = category;
+//     }
+// }
+
+// class QuoteManager {
+//     constructor() {
+//         this.quotes = [
+//             new Quote("The only way to do great work is to love what you do.", "Motivation"),
+//             new Quote("Life is what happens when you're busy making other plans.", "Life"),
+//             new Quote("You miss 100% of the shots you don't take.", "Sports"),
+//             new Quote("The only limit to our realization of tomorrow is our doubts of today.", "Inspiration"),
+//             new Quote("Do or do not, there is no try.", "Motivation")
+//         ];
+//         this.initializeEventListeners();
+//     }
+
+//     createAddQuoteForm() {
+//         const formDiv = document.createElement('div');
+//         formDiv.innerHTML = `
+//         <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+//         <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+//         <button onclick="addQuote()">Add Quote</button>
+//       `;
+//         return formDiv;
+//     }
+
+//     initializeEventListeners() {
+//         const showNewQuoteBtn = document.querySelector('button#newQuote') || document.getElementById('newQuote');
+//         if (showNewQuoteBtn) {
+//             showNewQuoteBtn.addEventListener('click', () => this.showRandomQuote());
+//             console.log('Show New Quote button listener attached');
+//         } else {
+//             console.error('Show New Quote button not found');
+//         }
+//     }
+
+//     showRandomQuote() {
+//         console.log('showRandomQuote called');
+//         if (this.quotes.length === 0) {
+//             this.showError('No quotes available');
+//             return;
+//         }
+
+//         const randomIndex = Math.floor(Math.random() * this.quotes.length);
+//         const randomQuote = this.quotes[randomIndex];
+//         const quoteDisplay = document.getElementById('quoteDisplay');
+
+//         if (quoteDisplay) {
+//             console.log('Displaying quote:', randomQuote);
+//             quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
+//         } else {
+//             console.error('Quote display element not found');
+//         }
+//     }
+
+//     addQuote() {
+//         const newQuoteText = document.getElementById('newQuoteText');
+//         const newQuoteCategory = document.getElementById('newQuoteCategory');
+
+//         if (!newQuoteText || !newQuoteCategory) {
+//             this.showError('Form elements not found');
+//             return;
+//         }
+
+//         const text = newQuoteText.value.trim();
+//         const category = newQuoteCategory.value.trim();
+
+//         if (!text || !category) {
+//             this.showError('Please enter both a quote and a category.');
+//             return;
+//         }
+
+//         const newQuote = new Quote(text, category);
+//         this.quotes.push(newQuote);
+//         console.log('New quote added:', newQuote);
+
+//         newQuoteText.value = '';
+//         newQuoteCategory.value = '';
+
+//         this.showSuccess('Quote added successfully!');
+//     }
+
+//     showSuccess(message) {
+//         alert(message);
+//     }
+
+//     showError(message) {
+//         alert(message);
+//     }
+// }
+
+// // Initialize the quote manager
+// document.addEventListener('DOMContentLoaded', () => {
+//     console.log('DOM loaded, initializing QuoteManager');
+//     window.quoteManager = new QuoteManager();
+// });
+
+// // Export the addQuote function for the HTML button
+// function addQuote() {
+//     if (window.quoteManager) {
+//         window.quoteManager.addQuote();
+//     } else {
+//         console.error('QuoteManager not initialized');
+//     }
+// }
+
+// Quote class definition
 class Quote {
-    constructor(text, category) {
+    constructor(text, author, category) {
+        this.id = Date.now() + Math.random().toString(36).substr(2, 9);
         this.text = text;
+        this.author = author;
         this.category = category;
+        this.createdAt = new Date().toISOString();
     }
 }
 
+// QuoteManager class to handle quote operations and storage
 class QuoteManager {
     constructor() {
-        this.quotes = [
-            new Quote("The only way to do great work is to love what you do.", "Motivation"),
-            new Quote("Life is what happens when you're busy making other plans.", "Life"),
-            new Quote("You miss 100% of the shots you don't take.", "Sports"),
-            new Quote("The only limit to our realization of tomorrow is our doubts of today.", "Inspiration"),
-            new Quote("Do or do not, there is no try.", "Motivation")
-        ];
+        this.quotes = this.loadFromLocalStorage() || [];
         this.initializeEventListeners();
+        this.renderQuotes();
     }
 
-    createAddQuoteForm() {
-        const formDiv = document.createElement('div');
-        formDiv.innerHTML = `
-        <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
-        <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-        <button onclick="addQuote()">Add Quote</button>
-      `;
-        return formDiv;
+    // Storage Methods
+    loadFromLocalStorage() {
+        const storedQuotes = localStorage.getItem('quotes');
+        return storedQuotes ? JSON.parse(storedQuotes) : null;
+    }
+
+    saveToLocalStorage() {
+        localStorage.setItem('quotes', JSON.stringify(this.quotes));
+        sessionStorage.setItem('lastModified', new Date().toISOString());
+    }
+
+    // Quote Management Methods
+    addQuote(text, author, category) {
+        const newQuote = new Quote(text, author, category);
+        this.quotes.push(newQuote);
+        this.saveToLocalStorage();
+        this.renderQuotes();
+    }
+
+    deleteQuote(id) {
+        this.quotes = this.quotes.filter(quote => quote.id !== id);
+        this.saveToLocalStorage();
+        this.renderQuotes();
+    }
+
+    // Import/Export Methods
+    exportQuotes() {
+        const dataStr = JSON.stringify(this.quotes, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `quotes-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    async importQuotes(file) {
+        try {
+            const text = await file.text();
+            const importedQuotes = JSON.parse(text);
+            
+            if (Array.isArray(importedQuotes)) {
+                this.quotes = [...this.quotes, ...importedQuotes];
+                this.saveToLocalStorage();
+                this.renderQuotes();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Error importing quotes:', error);
+            return false;
+        }
+    }
+
+    // UI Methods
+    renderQuotes() {
+        const quotesContainer = document.getElementById('quotes-container');
+        quotesContainer.innerHTML = '';
+
+        this.quotes.forEach(quote => {
+            const quoteElement = document.createElement('div');
+            quoteElement.className = 'quote-card';
+            quoteElement.innerHTML = `
+                <blockquote>
+                    <p>${quote.text}</p>
+                    <footer>
+                        - ${quote.author}
+                        <span class="category">${quote.category}</span>
+                    </footer>
+                </blockquote>
+                <button class="delete-btn" data-id="${quote.id}">Delete</button>
+            `;
+            quotesContainer.appendChild(quoteElement);
+        });
     }
 
     initializeEventListeners() {
-        const showNewQuoteBtn = document.querySelector('button#newQuote') || document.getElementById('newQuote');
-        if (showNewQuoteBtn) {
-            showNewQuoteBtn.addEventListener('click', () => this.showRandomQuote());
-            console.log('Show New Quote button listener attached');
-        } else {
-            console.error('Show New Quote button not found');
-        }
-    }
+        // Form submission handler
+        document.getElementById('quote-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = document.getElementById('quote-text').value;
+            const author = document.getElementById('quote-author').value;
+            const category = document.getElementById('quote-category').value;
+            
+            if (text && author) {
+                this.addQuote(text, author, category);
+                e.target.reset();
+            }
+        });
 
-    showRandomQuote() {
-        console.log('showRandomQuote called');
-        if (this.quotes.length === 0) {
-            this.showError('No quotes available');
-            return;
-        }
+        // Delete button handler
+        document.getElementById('quotes-container').addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                const id = e.target.dataset.id;
+                this.deleteQuote(id);
+            }
+        });
 
-        const randomIndex = Math.floor(Math.random() * this.quotes.length);
-        const randomQuote = this.quotes[randomIndex];
-        const quoteDisplay = document.getElementById('quoteDisplay');
+        // Export button handler
+        document.getElementById('export-btn').addEventListener('click', () => {
+            this.exportQuotes();
+        });
 
-        if (quoteDisplay) {
-            console.log('Displaying quote:', randomQuote);
-            quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
-        } else {
-            console.error('Quote display element not found');
-        }
-    }
-
-    addQuote() {
-        const newQuoteText = document.getElementById('newQuoteText');
-        const newQuoteCategory = document.getElementById('newQuoteCategory');
-
-        if (!newQuoteText || !newQuoteCategory) {
-            this.showError('Form elements not found');
-            return;
-        }
-
-        const text = newQuoteText.value.trim();
-        const category = newQuoteCategory.value.trim();
-
-        if (!text || !category) {
-            this.showError('Please enter both a quote and a category.');
-            return;
-        }
-
-        const newQuote = new Quote(text, category);
-        this.quotes.push(newQuote);
-        console.log('New quote added:', newQuote);
-
-        newQuoteText.value = '';
-        newQuoteCategory.value = '';
-
-        this.showSuccess('Quote added successfully!');
-    }
-
-    showSuccess(message) {
-        alert(message);
-    }
-
-    showError(message) {
-        alert(message);
+        // Import file handler
+        document.getElementById('import-file').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const success = await this.importQuotes(file);
+                if (success) {
+                    alert('Quotes imported successfully!');
+                } else {
+                    alert('Error importing quotes. Please check the file format.');
+                }
+                e.target.value = ''; // Reset file input
+            }
+        });
     }
 }
 
-// Initialize the quote manager
+// Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing QuoteManager');
-    window.quoteManager = new QuoteManager();
+    new QuoteManager();
 });
-
-// Export the addQuote function for the HTML button
-function addQuote() {
-    if (window.quoteManager) {
-        window.quoteManager.addQuote();
-    } else {
-        console.error('QuoteManager not initialized');
-    }
-}
