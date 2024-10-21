@@ -52,11 +52,14 @@
 </head>
 
 <body>
-
     <h1>Dynamic Quote Generator</h1>
+
+    <div id="notification" style="display:none; padding: 10px; background: #f0ad4e; color: white; margin-bottom: 20px;">
+    </div>
 
     <div id="quoteDisplay"></div>
     <button id="newQuote">Show New Quote</button>
+
     <div>
         <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
         <input id="quote-author" type="text" placeholder="Enter author name" />
@@ -66,10 +69,8 @@
 
     <!-- New Export Quotes Button -->
     <button id="export-btn"> Export Quotes</button>
-    <!-- Add this right after your export button -->
     <input type="file" id="import-file" accept=".json" style="display: none;">
     <button id="import-btn">Import Quotes</button>
-
 
     <!-- Dropdown for filtering quotes by category -->
     <div>
@@ -79,10 +80,16 @@
         </select>
     </div>
 
+    <!-- Conflict Resolution Section -->
+    <div id="conflictResolution" style="display:none;">
+        <h2>Conflict Detected</h2>
+        <p id="conflictMessage"></p>
+        <button id="resolveConflictBtn">Resolve Conflict</button>
+    </div>
+
     <script src="script.js"></script>
 </body>
 
-</html>
 <!-- Dynamically populated categories -->
 <!-- 
     <select id="categoryFilter" onchange="filterQuotes()">

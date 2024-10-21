@@ -35,13 +35,11 @@ class QuoteManager {
         try {
             const response = await fetch('https://api.quotable.io/quotes?limit=10');
             const data = await response.json();
-
-            // Transform the fetched quotes to match our local structure
             return data.results.map(quote => ({
                 id: quote._id,
                 text: quote.content,
                 author: quote.author,
-                category: quote.tags[0] || 'Uncategorized', // Use the first tag as category, or 'Uncategorized' if no tags
+                category: quote.tags[0] || 'Uncategorized',
                 createdAt: quote.dateAdded,
                 updatedAt: quote.dateModified || quote.dateAdded,
             }));
@@ -54,9 +52,51 @@ class QuoteManager {
     // Sync quotes with the server, using server data as the source of truth
     async syncWithServer() {
         const serverQuotes = await this.fetchQuotesFromServer();
-        this.quotes = this.resolveConflicts(this.quotes, serverQuotes);
+        const [mergedQuotes, conflicts] = this.resolveConflicts(this.quotes, serverQuotes);
+        this.quotes = mergedQuotes;
         this.saveToLocalStorage();
         this.renderQuotes();
+
+        if (conflicts.length > 0) {
+            this.showConflictNotification(conflicts);
+        }
+    }
+
+    // Show conflict notification
+    showConflictNotification(conflicts) {
+        const notification = document.getElementById('notification');
+        const conflictMessage = document.getElementById('conflictMessage');
+        const conflictResolutionSection = document.getElementById('conflictResolution');
+        
+        notification.innerHTML = 'Data updated from server. Please review conflicts.';
+        notification.style.display = 'block';
+
+        conflictMessage.innerHTML = conflicts.map(conflict => {
+            return `Conflict for quote ID: ${conflict.id}. Local: "${conflict.local.text}" | Server: "${conflict.server.text}"`;
+        }).join('<br>');
+        
+        conflictResolutionSection.style.display = 'block';
+
+        const resolveConflictBtn = document.getElementById('resolveConflictBtn');
+        resolveConflictBtn.onclick = () => this.manualConflictResolution(conflicts);
+    }
+
+    // Manual conflict resolution logic
+    manualConflictResolution(conflicts) {
+        conflicts.forEach(conflict => {
+            // Here you could add your custom logic to manually resolve conflicts
+            // For this example, we will just choose the server version
+            const serverQuote = conflict.server;
+            const index = this.quotes.findIndex(q => q.id === conflict.local.id);
+            if (index !== -1) {
+                this.quotes[index] = serverQuote; // Override local quote with server version
+            }
+        });
+
+        this.saveToLocalStorage();
+        this.renderQuotes();
+        document.getElementById('notification').style.display = 'none';
+        document.getElementById('conflictResolution').style.display = 'none';
     }
 
     // Periodic syncing every 30 seconds
@@ -67,23 +107,21 @@ class QuoteManager {
         }, 30000); // Sync every 30 seconds
     }
 
-    // Resolve conflicts between local and server quotes, giving priority to server data
+    // Resolve conflicts between local and server quotes
     resolveConflicts(localQuotes, serverQuotes) {
         const mergedQuotes = [];
+        const conflicts = [];
 
-        // Create a map of server quotes by ID for quick comparison
         const serverQuoteMap = new Map(serverQuotes.map(quote => [quote.id, quote]));
 
-        // Iterate over local quotes to merge
         localQuotes.forEach(localQuote => {
             const serverQuote = serverQuoteMap.get(localQuote.id);
-
             if (serverQuote) {
-                // Conflict exists, choose the server version
-                mergedQuotes.push(serverQuote);
+                // Conflict exists
+                conflicts.push({ local: localQuote, server: serverQuote });
+                mergedQuotes.push(serverQuote); // Choose server version
             } else {
-                // If the quote doesn't exist on the server, keep the local version
-                mergedQuotes.push(localQuote);
+                mergedQuotes.push(localQuote); // Keep local version
             }
         });
 
@@ -94,7 +132,7 @@ class QuoteManager {
             }
         });
 
-        return mergedQuotes;
+        return [mergedQuotes, conflicts];
     }
 
     // Add a new quote
@@ -154,13 +192,11 @@ class QuoteManager {
 
     // Initialize event listeners for buttons and inputs
     initializeEventListeners() {
-        // Show New Quote Button
         const newQuoteBtn = document.getElementById('newQuote');
         newQuoteBtn.addEventListener('click', () => {
             this.renderQuotes();
         });
 
-        // Add Quote Button
         const addQuoteBtn = document.getElementById('addQuoteBtn');
         addQuoteBtn.addEventListener('click', () => {
             const text = document.getElementById('newQuoteText').value.trim();
@@ -175,7 +211,6 @@ class QuoteManager {
             document.getElementById('newQuoteCategory').value = '';
         });
 
-        // Category Filter
         const categorySelect = document.getElementById('categoryFilter');
         categorySelect.addEventListener('change', (event) => {
             const selectedCategory = event.target.value;
