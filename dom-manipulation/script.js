@@ -33,17 +33,17 @@ class QuoteManager {
     // Fetch quotes from the server
     async fetchQuotesFromServer() {
         try {
-            const response = await fetch('https://jsonplaceholder.typicode.com/posts');
-            const serverQuotes = await response.json();
-
-            // Simulate server quote structure
-            return serverQuotes.slice(0, 10).map(post => ({
-                id: post.id.toString(),
-                text: post.title,
-                author: 'Server Author', // Placeholder
-                category: 'Server Category', // Placeholder
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
+            const response = await fetch('https://api.quotable.io/quotes?limit=10');
+            const data = await response.json();
+            
+            // Transform the fetched quotes to match our local structure
+            return data.results.map(quote => ({
+                id: quote._id,
+                text: quote.content,
+                author: quote.author,
+                category: quote.tags[0] || 'Uncategorized', // Use the first tag as category, or 'Uncategorized' if no tags
+                createdAt: quote.dateAdded,
+                updatedAt: quote.dateModified || quote.dateAdded,
             }));
         } catch (error) {
             console.error('Error fetching quotes from server:', error);
@@ -108,13 +108,13 @@ class QuoteManager {
 
             try {
                 // Simulate posting the new quote to the server
-                const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+                const response = await fetch('https://api.quotable.io/quotes', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        title: newQuote.text,
-                        body: newQuote.author, // Simulating author as body
-                        userId: 1,
+                        content: newQuote.text,
+                        author: newQuote.author,
+                        tags: [newQuote.category],
                     }),
                 });
                 const serverData = await response.json();
@@ -122,6 +122,7 @@ class QuoteManager {
 
                 alert('Quote added and synced with server successfully!');
             } catch (error) {
+                console.error('Error syncing quote with server:', error);
                 alert('Quote added locally, but failed to sync with server.');
             }
         } else {
