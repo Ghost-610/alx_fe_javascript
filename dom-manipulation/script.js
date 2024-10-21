@@ -15,26 +15,29 @@ class QuoteManager {
         this.populateCategories();
         this.initializeEventListeners();
         this.renderQuotes();
-        this.fetchQuotesFromServer(); // Initial fetch from server
-        this.periodicFetch(); // Start periodic data fetching
+        this.syncWithServer(); // Initial sync with server
+        this.periodicSync(); // Start periodic syncing
     }
 
+    // Load quotes from local storage
     loadFromLocalStorage() {
         const storedQuotes = localStorage.getItem('quotes');
         return storedQuotes ? JSON.parse(storedQuotes) : null;
     }
 
+    // Save quotes to local storage
     saveToLocalStorage() {
         localStorage.setItem('quotes', JSON.stringify(this.quotes));
     }
 
+    // Fetch quotes from the server
     async fetchQuotesFromServer() {
         try {
             const response = await fetch('https://jsonplaceholder.typicode.com/posts');
             const serverQuotes = await response.json();
 
-            // Simulate quotes structure for server data
-            const simulatedServerQuotes = serverQuotes.slice(0, 10).map(post => ({
+            // Simulate server quote structure
+            return serverQuotes.slice(0, 10).map(post => ({
                 id: post.id.toString(),
                 text: post.title,
                 author: 'Server Author', // Placeholder
@@ -42,46 +45,49 @@ class QuoteManager {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             }));
-
-            this.quotes = this.resolveConflicts(this.quotes, simulatedServerQuotes);
-            this.saveToLocalStorage();
-            this.renderQuotes();
         } catch (error) {
             console.error('Error fetching quotes from server:', error);
+            return [];
         }
     }
 
-    // Periodic fetch every 10 seconds to simulate server updates
-    periodicFetch() {
-        setInterval(() => {
-            console.log('Fetching latest quotes from server...');
-            this.fetchQuotesFromServer();
-        }, 10000); // Fetch every 10 seconds
+    // Sync quotes with the server, using server data as the source of truth
+    async syncWithServer() {
+        const serverQuotes = await this.fetchQuotesFromServer();
+        this.quotes = this.resolveConflicts(this.quotes, serverQuotes);
+        this.saveToLocalStorage();
+        this.renderQuotes();
     }
 
-    // Conflict resolution based on the latest update timestamp
+    // Periodic syncing every 30 seconds
+    periodicSync() {
+        setInterval(() => {
+            console.log('Syncing with server...');
+            this.syncWithServer();
+        }, 30000); // Sync every 30 seconds
+    }
+
+    // Resolve conflicts between local and server quotes, giving priority to server data
     resolveConflicts(localQuotes, serverQuotes) {
         const mergedQuotes = [];
 
         // Create a map of server quotes by ID for quick comparison
         const serverQuoteMap = new Map(serverQuotes.map(quote => [quote.id, quote]));
 
+        // Iterate over local quotes to merge
         localQuotes.forEach(localQuote => {
             const serverQuote = serverQuoteMap.get(localQuote.id);
-            
+
             if (serverQuote) {
-                // Both server and local quotes exist, compare timestamps
-                if (new Date(localQuote.updatedAt) > new Date(serverQuote.updatedAt)) {
-                    mergedQuotes.push(localQuote); // Local version is newer, keep local
-                } else {
-                    mergedQuotes.push(serverQuote); // Server version is newer, keep server
-                }
+                // Conflict exists, choose the server version
+                mergedQuotes.push(serverQuote);
             } else {
-                mergedQuotes.push(localQuote); // Local quote not present on server
+                // If the quote doesn't exist on the server, keep the local version
+                mergedQuotes.push(localQuote);
             }
         });
 
-        // Add server quotes that are missing locally
+        // Add any new server quotes not present locally
         serverQuotes.forEach(serverQuote => {
             if (!localQuotes.some(quote => quote.id === serverQuote.id)) {
                 mergedQuotes.push(serverQuote);
@@ -91,6 +97,7 @@ class QuoteManager {
         return mergedQuotes;
     }
 
+    // Add a new quote
     async addQuote(text, author, category) {
         if (text && category) {
             const newQuote = new Quote(text, author, category);
@@ -100,7 +107,7 @@ class QuoteManager {
             this.populateCategories(); // Update category filter dropdown
 
             try {
-                // Simulate POSTing to the server using JSONPlaceholder
+                // Simulate posting the new quote to the server
                 const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -122,6 +129,7 @@ class QuoteManager {
         }
     }
 
+    // Render quotes to the page
     renderQuotes(category = null) {
         const quoteDisplay = document.getElementById('quoteDisplay');
         if (!quoteDisplay) return;
@@ -146,6 +154,7 @@ class QuoteManager {
         }
     }
 
+    // Populate category dropdown based on available quotes
     populateCategories() {
         const categories = [...new Set(this.quotes.map(quote => quote.category))];
         const categorySelect = document.getElementById('categoryFilter');
@@ -161,6 +170,7 @@ class QuoteManager {
         }
     }
 
+    // Initialize event listeners
     initializeEventListeners() {
         // Event listener for adding a new quote
         const addQuoteBtn = document.getElementById('addQuoteBtn');
