@@ -57,24 +57,36 @@
 
     <div id="quoteDisplay"></div>
     <button id="newQuote">Show New Quote</button>
-
-    <div class="text-form">
+    <div>
         <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+        <input id="quote-author" type="text" placeholder="Enter author name" />
         <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-        <button onclick="addQuote()">Add Quote</button>
+        <button id="addQuoteBtn">Add Quote</button>
     </div>
+
     <!-- New Export Quotes Button -->
     <button id="export-btn"> Export Quotes</button>
     <!-- Add this right after your export button -->
     <input type="file" id="import-file" accept=".json" style="display: none;">
     <button id="import-btn">Import Quotes</button>
 
-    <select id="categoryFilter" onchange="filterQuotes()">
-        <option value="all">All Categories</option>
-        <!-- Dynamically populated categories -->
-    </select>
+
+    <!-- Dropdown for filtering quotes by category -->
+    <div>
+        <label for="categoryFilter">Filter by Category:</label>
+        <select id="categoryFilter">
+            <option value="">All Categories</option>
+        </select>
+    </div>
 
     <script src="script.js"></script>
 </body>
 
 </html>
+<!-- Dynamically populated categories -->
+<!-- 
+    <select id="categoryFilter" onchange="filterQuotes()">
+        <option value="all">All Categories</option>
+    </select>
+
+ -->
