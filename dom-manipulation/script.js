@@ -1,58 +1,21 @@
+class Quote {
+    constructor(text, author, category) {
+        this.id = Date.now() + Math.random().toString(36).substr(2, 9);
+        this.text = text;
+        this.author = author || 'Anonymous'; // Default to 'Anonymous' if no author is provided
+        this.category = category;
+        this.createdAt = new Date().toISOString();
+        this.updatedAt = new Date().toISOString(); // Track last update
+    }
+}
+
 class QuoteManager {
     constructor() {
         this.quotes = this.loadFromLocalStorage() || [];
-        this.syncWithServer();
         this.populateCategories();
         this.initializeEventListeners();
         this.renderQuotes();
-    }
-
-    async syncWithServer() {
-        try {
-            const response = await fetch('https://example.com/api/quotes');
-            const serverQuotes = await response.json();
-            
-            // Merge local and server data, resolving conflicts
-            this.quotes = this.resolveConflicts(this.quotes, serverQuotes);
-            this.saveToLocalStorage();
-            this.renderQuotes();
-        } catch (error) {
-            console.error('Error syncing with server:', error);
-        }
-    }
-
-    resolveConflicts(localQuotes, serverQuotes) {
-        const mergedQuotes = [];
-
-        // Create a map of server quotes by ID for easy lookup
-        const serverQuoteMap = new Map(serverQuotes.map(quote => [quote.id, quote]));
-
-        localQuotes.forEach(localQuote => {
-            const serverQuote = serverQuoteMap.get(localQuote.id);
-
-            if (serverQuote) {
-                // Conflict detected: Both local and server quotes exist
-                if (new Date(localQuote.updatedAt) > new Date(serverQuote.updatedAt)) {
-                    // Local is newer, keep local
-                    mergedQuotes.push(localQuote);
-                } else {
-                    // Server is newer, keep server
-                    mergedQuotes.push(serverQuote);
-                }
-            } else {
-                // No conflict, keep local quote
-                mergedQuotes.push(localQuote);
-            }
-        });
-
-        // Add quotes that are only present on the server
-        serverQuotes.forEach(serverQuote => {
-            if (!localQuotes.some(quote => quote.id === serverQuote.id)) {
-                mergedQuotes.push(serverQuote);
-            }
-        });
-
-        return mergedQuotes;
+        this.syncWithServer(); // Sync with server after initialization
     }
 
     loadFromLocalStorage() {
@@ -64,6 +27,53 @@ class QuoteManager {
         localStorage.setItem('quotes', JSON.stringify(this.quotes));
     }
 
+    // Sync quotes with the server and resolve conflicts
+    async syncWithServer() {
+        try {
+            const response = await fetch('https://example.com/api/quotes');
+            const serverQuotes = await response.json();
+            
+            // Resolve conflicts by merging local and server quotes
+            this.quotes = this.resolveConflicts(this.quotes, serverQuotes);
+            this.saveToLocalStorage();
+            this.renderQuotes();
+        } catch (error) {
+            console.error('Error syncing with server:', error);
+        }
+    }
+
+    // Conflict resolution based on the latest update timestamp
+    resolveConflicts(localQuotes, serverQuotes) {
+        const mergedQuotes = [];
+
+        // Create a map of server quotes by ID for quick comparison
+        const serverQuoteMap = new Map(serverQuotes.map(quote => [quote.id, quote]));
+
+        localQuotes.forEach(localQuote => {
+            const serverQuote = serverQuoteMap.get(localQuote.id);
+            
+            if (serverQuote) {
+                // Both server and local quotes exist, compare timestamps
+                if (new Date(localQuote.updatedAt) > new Date(serverQuote.updatedAt)) {
+                    mergedQuotes.push(localQuote); // Local version is newer, keep local
+                } else {
+                    mergedQuotes.push(serverQuote); // Server version is newer, keep server
+                }
+            } else {
+                mergedQuotes.push(localQuote); // Local quote not present on server
+            }
+        });
+
+        // Add server quotes that are missing locally
+        serverQuotes.forEach(serverQuote => {
+            if (!localQuotes.some(quote => quote.id === serverQuote.id)) {
+                mergedQuotes.push(serverQuote);
+            }
+        });
+
+        return mergedQuotes;
+    }
+
     async addQuote(text, author, category) {
         if (text && category) {
             const newQuote = new Quote(text, author, category);
@@ -71,14 +81,12 @@ class QuoteManager {
             this.saveToLocalStorage();
             this.renderQuotes();
             this.populateCategories(); // Update category filter dropdown
-            
+
             try {
-                // Sync new quote with server
+                // Sync with server (optimistic update)
                 await fetch('https://example.com/api/quotes', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newQuote),
                 });
                 alert('Quote added and synced with server successfully!');
@@ -94,6 +102,7 @@ class QuoteManager {
         const existingQuoteIndex = this.quotes.findIndex(q => q.id === quote.id);
         if (existingQuoteIndex !== -1) {
             this.quotes[existingQuoteIndex] = quote;
+            this.quotes[existingQuoteIndex].updatedAt = new Date().toISOString(); // Update timestamp
             this.saveToLocalStorage();
             this.renderQuotes();
             
@@ -101,9 +110,7 @@ class QuoteManager {
                 // Sync updated quote with server
                 await fetch(`https://example.com/api/quotes/${quote.id}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(quote),
                 });
                 alert('Quote updated and synced with server successfully!');
@@ -117,12 +124,10 @@ class QuoteManager {
         this.quotes = this.quotes.filter(quote => quote.id !== quoteId);
         this.saveToLocalStorage();
         this.renderQuotes();
-        
+
         try {
-            // Sync quote deletion with server
-            await fetch(`https://example.com/api/quotes/${quoteId}`, {
-                method: 'DELETE',
-            });
+            // Sync deletion with server
+            await fetch(`https://example.com/api/quotes/${quoteId}`, { method: 'DELETE' });
             alert('Quote deleted and synced with server successfully!');
         } catch (error) {
             alert('Quote deleted locally, but failed to sync with server.');
