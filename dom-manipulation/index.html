@@ -68,7 +68,11 @@
     <!-- Add this right after your export button -->
     <input type="file" id="import-file" accept=".json" style="display: none;">
     <button id="import-btn">Import Quotes</button>
-   
+
+    <select id="categoryFilter" onchange="filterQuotes()">
+        <option value="all">All Categories</option>
+        <!-- Dynamically populated categories -->
+    </select>
 
     <script src="script.js"></script>
 </body>
