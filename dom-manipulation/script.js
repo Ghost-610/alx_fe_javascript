@@ -15,7 +15,8 @@ class QuoteManager {
         this.populateCategories();
         this.initializeEventListeners();
         this.renderQuotes();
-        this.syncWithServer(); // Sync with server after initialization
+        this.fetchQuotesFromServer(); // Initial fetch from server
+        this.periodicFetch(); // Start periodic data fetching
     }
 
     loadFromLocalStorage() {
@@ -27,19 +28,35 @@ class QuoteManager {
         localStorage.setItem('quotes', JSON.stringify(this.quotes));
     }
 
-    // Sync quotes with the server and resolve conflicts
-    async syncWithServer() {
+    async fetchQuotesFromServer() {
         try {
-            const response = await fetch('https://example.com/api/quotes');
+            const response = await fetch('https://jsonplaceholder.typicode.com/posts');
             const serverQuotes = await response.json();
-            
-            // Resolve conflicts by merging local and server quotes
-            this.quotes = this.resolveConflicts(this.quotes, serverQuotes);
+
+            // Simulate quotes structure for server data
+            const simulatedServerQuotes = serverQuotes.slice(0, 10).map(post => ({
+                id: post.id.toString(),
+                text: post.title,
+                author: 'Server Author', // Placeholder
+                category: 'Server Category', // Placeholder
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            }));
+
+            this.quotes = this.resolveConflicts(this.quotes, simulatedServerQuotes);
             this.saveToLocalStorage();
             this.renderQuotes();
         } catch (error) {
-            console.error('Error syncing with server:', error);
+            console.error('Error fetching quotes from server:', error);
         }
+    }
+
+    // Periodic fetch every 10 seconds to simulate server updates
+    periodicFetch() {
+        setInterval(() => {
+            console.log('Fetching latest quotes from server...');
+            this.fetchQuotesFromServer();
+        }, 10000); // Fetch every 10 seconds
     }
 
     // Conflict resolution based on the latest update timestamp
@@ -83,54 +100,25 @@ class QuoteManager {
             this.populateCategories(); // Update category filter dropdown
 
             try {
-                // Sync with server (optimistic update)
-                await fetch('https://example.com/api/quotes', {
+                // Simulate POSTing to the server using JSONPlaceholder
+                const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newQuote),
+                    body: JSON.stringify({
+                        title: newQuote.text,
+                        body: newQuote.author, // Simulating author as body
+                        userId: 1,
+                    }),
                 });
+                const serverData = await response.json();
+                console.log('Quote synced with server:', serverData);
+
                 alert('Quote added and synced with server successfully!');
             } catch (error) {
                 alert('Quote added locally, but failed to sync with server.');
             }
         } else {
             alert('Please provide both the quote text and category.');
-        }
-    }
-
-    async updateQuote(quote) {
-        const existingQuoteIndex = this.quotes.findIndex(q => q.id === quote.id);
-        if (existingQuoteIndex !== -1) {
-            this.quotes[existingQuoteIndex] = quote;
-            this.quotes[existingQuoteIndex].updatedAt = new Date().toISOString(); // Update timestamp
-            this.saveToLocalStorage();
-            this.renderQuotes();
-            
-            try {
-                // Sync updated quote with server
-                await fetch(`https://example.com/api/quotes/${quote.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(quote),
-                });
-                alert('Quote updated and synced with server successfully!');
-            } catch (error) {
-                alert('Quote updated locally, but failed to sync with server.');
-            }
-        }
-    }
-
-    async deleteQuote(quoteId) {
-        this.quotes = this.quotes.filter(quote => quote.id !== quoteId);
-        this.saveToLocalStorage();
-        this.renderQuotes();
-
-        try {
-            // Sync deletion with server
-            await fetch(`https://example.com/api/quotes/${quoteId}`, { method: 'DELETE' });
-            alert('Quote deleted and synced with server successfully!');
-        } catch (error) {
-            alert('Quote deleted locally, but failed to sync with server.');
         }
     }
 
