@@ -38,13 +38,30 @@ class QuoteManager {
         }
     }
 
-    renderQuotes(category = null) {
+    // New filterQuote method to filter quotes by text, author, or category
+    filterQuote(keyword) {
+        if (!keyword) return this.quotes;
+
+        return this.quotes.filter(quote =>
+            quote.text.toLowerCase().includes(keyword.toLowerCase()) ||
+            quote.author.toLowerCase().includes(keyword.toLowerCase()) ||
+            quote.category.toLowerCase().includes(keyword.toLowerCase())
+        );
+    }
+
+    renderQuotes(category = null, keyword = '') {
         const quoteDisplay = document.getElementById('quoteDisplay');
         if (!quoteDisplay) return;
 
-        const filteredQuotes = category
-            ? this.quotes.filter(quote => quote.category === category)
-            : this.quotes;
+        let filteredQuotes = this.quotes;
+
+        // Filter by category if provided
+        if (category) {
+            filteredQuotes = filteredQuotes.filter(quote => quote.category === category);
+        }
+
+        // Apply the filter by keyword using the filterQuote method
+        filteredQuotes = this.filterQuote(keyword);
 
         if (filteredQuotes.length > 0) {
             const randomQuote = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
@@ -58,7 +75,7 @@ class QuoteManager {
                 </blockquote>
             `;
         } else {
-            quoteDisplay.innerHTML = '<p>No quotes available. Add some quotes to get started!</p>';
+            quoteDisplay.innerHTML = '<p>No quotes match your filter criteria.</p>';
         }
     }
 
@@ -101,6 +118,15 @@ class QuoteManager {
             categorySelect.addEventListener('change', (event) => {
                 const selectedCategory = event.target.value;
                 this.renderQuotes(selectedCategory);
+            });
+        }
+
+        // Event listener for keyword search filtering
+        const searchInput = document.getElementById('quoteSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', (event) => {
+                const keyword = event.target.value;
+                this.renderQuotes(null, keyword);
             });
         }
     }
