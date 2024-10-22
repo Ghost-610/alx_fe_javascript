@@ -48,6 +48,7 @@ class QuoteManager {
             return [];
         }
     }
+    
 
     // Sync quotes with the server, using server data as the source of truth
     async syncWithServer() {
