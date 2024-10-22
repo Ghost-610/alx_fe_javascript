@@ -30,18 +30,18 @@ class QuoteManager {
         localStorage.setItem('quotes', JSON.stringify(this.quotes));
     }
 
-    // Fetch quotes from the server
+    // Fetch quotes from mock API (Server Simulation)
     async fetchQuotesFromServer() {
         try {
-            const response = await fetch('https://api.quotable.io/quotes?limit=10');
+            const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=10'); // Mock API
             const data = await response.json();
-            return data.results.map(quote => ({
-                id: quote._id,
-                text: quote.content,
-                author: quote.author,
-                category: quote.tags[0] || 'Uncategorized',
-                createdAt: quote.dateAdded,
-                updatedAt: quote.dateModified || quote.dateAdded,
+            return data.map(post => ({
+                id: post.id,
+                text: post.title, // Simulating quote text as post title
+                author: 'Author ' + post.userId, // Simulated author
+                category: 'General', // Simulated category
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
             }));
         } catch (error) {
             console.error('Error fetching quotes from server:', error);
@@ -67,14 +67,14 @@ class QuoteManager {
         const notification = document.getElementById('notification');
         const conflictMessage = document.getElementById('conflictMessage');
         const conflictResolutionSection = document.getElementById('conflictResolution');
-        
+
         notification.innerHTML = 'Data updated from server. Please review conflicts.';
         notification.style.display = 'block';
 
         conflictMessage.innerHTML = conflicts.map(conflict => {
             return `Conflict for quote ID: ${conflict.id}. Local: "${conflict.local.text}" | Server: "${conflict.server.text}"`;
         }).join('<br>');
-        
+
         conflictResolutionSection.style.display = 'block';
 
         const resolveConflictBtn = document.getElementById('resolveConflictBtn');
@@ -84,8 +84,6 @@ class QuoteManager {
     // Manual conflict resolution logic
     manualConflictResolution(conflicts) {
         conflicts.forEach(conflict => {
-            // Here you could add your custom logic to manually resolve conflicts
-            // For this example, we will just choose the server version
             const serverQuote = conflict.server;
             const index = this.quotes.findIndex(q => q.id === conflict.local.id);
             if (index !== -1) {
