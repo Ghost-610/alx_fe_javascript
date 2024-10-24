@@ -12,7 +12,7 @@ class QuoteManager {
     constructor() {
         this.quotes = this.loadFromLocalStorage() || [];
         this.initializeEventListeners();
-        this.renderQuotes();
+        this.renderQuotes(); // Show a random quote on initialization
         this.populateCategories();
     }
 
@@ -55,6 +55,10 @@ class QuoteManager {
         } else {
             quoteDisplay.innerHTML = '<p>No quotes available. Add some quotes to get started!</p>';
         }
+    }
+
+    showRandomQuote() {
+        this.renderQuotes(); // Simply call renderQuotes to show a random quote
     }
 
     populateCategories() {
@@ -103,9 +107,7 @@ class QuoteManager {
 
         const newQuoteBtn = document.getElementById('newQuote');
         if (newQuoteBtn) {
-            newQuoteBtn.addEventListener('click', () => {
-                this.renderQuotes(); // Show a random quote
-            });
+            newQuoteBtn.addEventListener('click', () => this.showRandomQuote()); // Call showRandomQuote to show a new quote
         }
 
         const importBtn = document.getElementById('import-btn');
