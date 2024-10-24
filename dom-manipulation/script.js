@@ -1,9 +1,20 @@
+class Quote {
+    constructor(text, author, category) {
+        this.id = Date.now() + Math.random().toString(36).substr(2, 9);
+        this.text = text;
+        this.author = author || 'Anonymous';
+        this.category = category || 'Uncategorized';
+        this.createdAt = new Date().toISOString();
+    }
+}
+
 class QuoteManager {
     constructor() {
         this.quotes = this.loadFromLocalStorage() || [];
-        this.populateCategories();
+        this.createAddQuoteForm(); // Call to create the form for adding quotes
         this.initializeEventListeners();
-        this.showRandomQuote(); // Show a random quote on initialization
+        this.renderQuotes();
+        this.populateCategories();
     }
 
     loadFromLocalStorage() {
@@ -19,28 +30,32 @@ class QuoteManager {
         const newQuote = new Quote(text, author, category);
         this.quotes.push(newQuote);
         this.saveToLocalStorage();
-        this.showRandomQuote(); // Show random quote after adding a new one
+        this.renderQuotes();
         this.populateCategories();
     }
 
-    // New method to show a random quote
-    showRandomQuote() {
+    renderQuotes(category = null) {
         const quoteDisplay = document.getElementById('quoteDisplay');
-        if (!quoteDisplay || this.quotes.length === 0) {
-            quoteDisplay.innerHTML = '<p>No quotes available. Add some quotes to get started!</p>';
-            return;
-        }
+        if (!quoteDisplay) return;
 
-        const randomQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
-        quoteDisplay.innerHTML = `
-            <blockquote>
-                <p>${randomQuote.text}</p>
-                <footer>
-                    ${randomQuote.author || 'Unknown'}
-                    <span class="category">${randomQuote.category}</span>
-                </footer>
-            </blockquote>
-        `;
+        const filteredQuotes = category
+            ? this.quotes.filter(quote => quote.category === category)
+            : this.quotes;
+
+        if (filteredQuotes.length > 0) {
+            const randomQuote = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
+            quoteDisplay.innerHTML = `
+                <blockquote>
+                    <p>${randomQuote.text}</p>
+                    <footer>
+                        ${randomQuote.author || 'Unknown'}
+                        <span class="category">${randomQuote.category}</span>
+                    </footer>
+                </blockquote>
+            `;
+        } else {
+            quoteDisplay.innerHTML = '<p>No quotes available. Add some quotes to get started!</p>';
+        }
     }
 
     populateCategories() {
@@ -58,35 +73,57 @@ class QuoteManager {
         }
     }
 
+    // Function to create the form dynamically for adding quotes
+    createAddQuoteForm() {
+        const formContainer = document.createElement('div');
+
+        formContainer.innerHTML = `
+            <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+            <input id="quote-author" type="text" placeholder="Enter quote author" />
+            <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+            <button id="addQuoteBtn">Add Quote</button>
+        `;
+
+        document.body.appendChild(formContainer);
+    }
+
     initializeEventListeners() {
-        const newQuoteBtn = document.getElementById('newQuote');
-        newQuoteBtn.addEventListener('click', () => {
-            this.showRandomQuote(); // Call showRandomQuote on button click
-        });
-
         const addQuoteBtn = document.getElementById('addQuoteBtn');
-        addQuoteBtn.addEventListener('click', () => {
-            const text = document.getElementById('newQuoteText').value.trim();
-            const author = document.getElementById('quote-author').value.trim();
-            const category = document.getElementById('newQuoteCategory').value.trim();
+        if (addQuoteBtn) {
+            addQuoteBtn.addEventListener('click', () => {
+                const text = document.getElementById('newQuoteText').value.trim();
+                const author = document.getElementById('quote-author').value.trim();
+                const category = document.getElementById('newQuoteCategory').value.trim();
 
-            this.addQuote(text, author, category);
+                if (text && category) {
+                    this.addQuote(text, author, category);
 
-            // Clear input fields
-            document.getElementById('newQuoteText').value = '';
-            document.getElementById('quote-author').value = '';
-            document.getElementById('newQuoteCategory').value = '';
-        });
+                    // Clear input fields after adding the quote
+                    document.getElementById('newQuoteText').value = '';
+                    document.getElementById('quote-author').value = '';
+                    document.getElementById('newQuoteCategory').value = '';
+                } else {
+                    alert('Please fill in both the quote and category fields');
+                }
+            });
+        }
 
         const categorySelect = document.getElementById('categoryFilter');
-        categorySelect.addEventListener('change', (event) => {
-            const selectedCategory = event.target.value;
-            this.renderQuotes(selectedCategory);
-        });
+        if (categorySelect) {
+            categorySelect.addEventListener('change', (event) => {
+                const selectedCategory = event.target.value;
+                this.renderQuotes(selectedCategory);
+            });
+        }
+
+        const newQuoteBtn = document.getElementById('newQuote');
+        if (newQuoteBtn) {
+            newQuoteBtn.addEventListener('click', () => this.renderQuotes());
+        }
     }
 }
 
-// Initialize the application
+// Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.quoteManager = new QuoteManager();
 });
