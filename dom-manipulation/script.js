@@ -114,6 +114,13 @@ class QuoteManager {
                 document.getElementById('importFile').click(); // Trigger the file input click
             });
         }
+
+        const exportBtn = document.getElementById('export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportQuotes(); // Call export function
+            });
+        }
     }
 
     importFromJsonFile(event) {
@@ -126,6 +133,19 @@ class QuoteManager {
             alert('Quotes imported successfully!');
         };
         fileReader.readAsText(event.target.files[0]);
+    }
+
+    exportQuotes() {
+        const dataStr = JSON.stringify(this.quotes, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'quotes.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 }
 
