@@ -58,7 +58,7 @@ class QuoteManager {
         const categorySelect = document.getElementById('categoryFilter');
 
         if (categorySelect) {
-            categorySelect.innerHTML = '<option value="">All Categories</option>';
+            categorySelect.innerHTML = '<option value="all">All Categories</option>'; // Default option
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -104,7 +104,7 @@ class QuoteManager {
         const categorySelect = document.getElementById('categoryFilter');
         categorySelect.addEventListener('change', (event) => {
             const selectedCategory = event.target.value;
-            this.renderQuotes(selectedCategory);
+            this.filterQuotes(selectedCategory); // Call filterQuotes on change
         });
 
         // Import button functionality
@@ -117,6 +117,11 @@ class QuoteManager {
         const exportBtn = document.getElementById('export-btn');
         exportBtn.addEventListener('click', () => {
             this.exportQuotesToJson();
+        });
+
+        // Add import file change listener
+        document.getElementById('importFile').addEventListener('change', (event) => {
+            this.importFromJsonFile(event); // Call import function on file select
         });
     }
 
@@ -150,6 +155,38 @@ class QuoteManager {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url); // Clean up the URL object
+    }
+
+    // Filter quotes based on category
+    filterQuotes(selectedCategory) {
+        const filteredQuotes = selectedCategory === 'all'
+            ? this.quotes
+            : this.quotes.filter(quote => quote.category === selectedCategory);
+
+        this.renderQuotes(filteredQuotes);
+    }
+
+    // Render quotes to display
+    renderQuotes(quotesToRender) {
+        const quoteDisplay = document.getElementById('quoteDisplay');
+        quoteDisplay.innerHTML = ''; // Clear previous quotes
+
+        if (quotesToRender.length === 0) {
+            quoteDisplay.innerHTML = '<p>No quotes available in this category.</p>';
+            return;
+        }
+
+        quotesToRender.forEach(quote => {
+            quoteDisplay.innerHTML += `
+                <blockquote>
+                    <p>${quote.text}</p>
+                    <footer>
+                        ${quote.author || 'Unknown'}
+                        <span class="category">${quote.category}</span>
+                    </footer>
+                </blockquote>
+            `;
+        });
     }
 }
 
