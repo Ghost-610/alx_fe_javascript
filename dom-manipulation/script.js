@@ -15,7 +15,6 @@ class QuoteManager {
         this.populateCategories();
         this.initializeEventListeners();
         this.showRandomQuote();
-        this.fetchQuotes(); // Fetch initial quotes
         this.startPeriodicFetching(); // Start periodic fetching of quotes
     }
 
@@ -98,6 +97,7 @@ class QuoteManager {
 
             this.addQuote(text, author, category);
 
+            // Clear input fields
             document.getElementById('newQuoteText').value = '';
             document.getElementById('quote-author').value = '';
             document.getElementById('newQuoteCategory').value = '';
@@ -120,7 +120,7 @@ class QuoteManager {
         });
     }
 
-    async fetchQuotes() {
+    async fetchQuotesFromServer() {
         try {
             const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
             const data = await response.json();
@@ -168,7 +168,7 @@ class QuoteManager {
 
     startPeriodicFetching() {
         setInterval(() => {
-            this.fetchQuotes(); // Fetch new quotes every 10 seconds
+            this.fetchQuotesFromServer(); // Fetch new quotes every 10 seconds
         }, 10000);
     }
 
