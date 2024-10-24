@@ -11,7 +11,6 @@ class Quote {
 class QuoteManager {
     constructor() {
         this.quotes = this.loadFromLocalStorage() || [];
-        this.createAddQuoteForm(); // Call to create the form for adding quotes
         this.initializeEventListeners();
         this.renderQuotes();
         this.populateCategories();
@@ -34,7 +33,6 @@ class QuoteManager {
         this.populateCategories();
     }
 
-    // Render quotes to the page
     renderQuotes(category = null) {
         const quoteDisplay = document.getElementById('quoteDisplay');
         if (!quoteDisplay) return;
@@ -45,27 +43,6 @@ class QuoteManager {
 
         if (filteredQuotes.length > 0) {
             const randomQuote = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
-            quoteDisplay.innerHTML = `
-                <blockquote>
-                    <p>${randomQuote.text}</p>
-                    <footer>
-                        ${randomQuote.author || 'Unknown'}
-                        <span class="category">${randomQuote.category}</span>
-                    </footer>
-                </blockquote>
-            `;
-        } else {
-            quoteDisplay.innerHTML = '<p>No quotes available. Add some quotes to get started!</p>';
-        }
-    }
-
-    // Display a random quote from all available quotes
-    showRandomQuote() {
-        const quoteDisplay = document.getElementById('quoteDisplay');
-        if (!quoteDisplay) return;
-
-        if (this.quotes.length > 0) {
-            const randomQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
             quoteDisplay.innerHTML = `
                 <blockquote>
                     <p>${randomQuote.text}</p>
@@ -93,20 +70,6 @@ class QuoteManager {
                 categorySelect.appendChild(option);
             });
         }
-    }
-
-    // Function to create the form dynamically for adding quotes
-    createAddQuoteForm() {
-        const formContainer = document.createElement('div');
-
-        formContainer.innerHTML = `
-            <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
-            <input id="quote-author" type="text" placeholder="Enter quote author" />
-            <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-            <button id="addQuoteBtn">Add Quote</button>
-        `;
-
-        document.body.appendChild(formContainer);
     }
 
     initializeEventListeners() {
@@ -140,12 +103,36 @@ class QuoteManager {
 
         const newQuoteBtn = document.getElementById('newQuote');
         if (newQuoteBtn) {
-            newQuoteBtn.addEventListener('click', () => this.showRandomQuote()); // Bind to showRandomQuote function
+            newQuoteBtn.addEventListener('click', () => {
+                this.renderQuotes(); // Show a random quote
+            });
         }
+
+        const importBtn = document.getElementById('import-btn');
+        if (importBtn) {
+            importBtn.addEventListener('click', () => {
+                document.getElementById('importFile').click(); // Trigger the file input click
+            });
+        }
+    }
+
+    importFromJsonFile(event) {
+        const fileReader = new FileReader();
+        fileReader.onload = (event) => {
+            const importedQuotes = JSON.parse(event.target.result);
+            this.quotes.push(...importedQuotes);
+            this.saveToLocalStorage();
+            this.renderQuotes();
+            alert('Quotes imported successfully!');
+        };
+        fileReader.readAsText(event.target.files[0]);
     }
 }
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.quoteManager = new QuoteManager();
+    document.getElementById('importFile').addEventListener('change', (event) => {
+        quoteManager.importFromJsonFile(event);
+    });
 });
