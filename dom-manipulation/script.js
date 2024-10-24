@@ -112,6 +112,12 @@ class QuoteManager {
         importBtn.addEventListener('click', () => {
             document.getElementById('importFile').click(); // Trigger the file input click
         });
+
+        // Export button functionality
+        const exportBtn = document.getElementById('export-btn');
+        exportBtn.addEventListener('click', () => {
+            this.exportQuotesToJson();
+        });
     }
 
     // Import quotes from a JSON file
@@ -130,6 +136,20 @@ class QuoteManager {
             }
         };
         fileReader.readAsText(event.target.files[0]);
+    }
+
+    // Export quotes to a JSON file
+    exportQuotesToJson() {
+        const dataStr = JSON.stringify(this.quotes, null, 2); // Convert quotes to JSON string
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'quotes.json'; // Name for the downloaded file
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url); // Clean up the URL object
     }
 }
 
