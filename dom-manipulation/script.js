@@ -34,6 +34,7 @@ class QuoteManager {
         this.populateCategories();
     }
 
+    // Render quotes to the page
     renderQuotes(category = null) {
         const quoteDisplay = document.getElementById('quoteDisplay');
         if (!quoteDisplay) return;
@@ -44,6 +45,27 @@ class QuoteManager {
 
         if (filteredQuotes.length > 0) {
             const randomQuote = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
+            quoteDisplay.innerHTML = `
+                <blockquote>
+                    <p>${randomQuote.text}</p>
+                    <footer>
+                        ${randomQuote.author || 'Unknown'}
+                        <span class="category">${randomQuote.category}</span>
+                    </footer>
+                </blockquote>
+            `;
+        } else {
+            quoteDisplay.innerHTML = '<p>No quotes available. Add some quotes to get started!</p>';
+        }
+    }
+
+    // Display a random quote from all available quotes
+    showRandomQuote() {
+        const quoteDisplay = document.getElementById('quoteDisplay');
+        if (!quoteDisplay) return;
+
+        if (this.quotes.length > 0) {
+            const randomQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
             quoteDisplay.innerHTML = `
                 <blockquote>
                     <p>${randomQuote.text}</p>
@@ -118,7 +140,7 @@ class QuoteManager {
 
         const newQuoteBtn = document.getElementById('newQuote');
         if (newQuoteBtn) {
-            newQuoteBtn.addEventListener('click', () => this.renderQuotes());
+            newQuoteBtn.addEventListener('click', () => this.showRandomQuote()); // Bind to showRandomQuote function
         }
     }
 }
