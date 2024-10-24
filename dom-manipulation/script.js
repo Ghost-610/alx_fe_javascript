@@ -124,10 +124,20 @@ class QuoteManager {
         try {
             const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
             const data = await response.json();
-            data.forEach(item => {
-                const newQuote = new Quote(item.body, item.title, 'Fetched Category');
-                this.quotes.push(newQuote);
+            const fetchedQuotes = data.map(item => new Quote(item.body, item.title, 'Fetched Category'));
+
+            // Update local quotes and handle conflicts
+            fetchedQuotes.forEach(fetchedQuote => {
+                const existingQuoteIndex = this.quotes.findIndex(quote => quote.text === fetchedQuote.text && quote.author === fetchedQuote.author);
+                if (existingQuoteIndex !== -1) {
+                    // Conflict detected: overwrite the existing quote with the fetched one
+                    this.quotes[existingQuoteIndex] = fetchedQuote;
+                } else {
+                    // If the quote doesn't exist locally, add it
+                    this.quotes.push(fetchedQuote);
+                }
             });
+
             this.saveToLocalStorage();
             this.populateCategories();
             this.showRandomQuote();
