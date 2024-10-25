@@ -1,18 +1,5 @@
 // Standalone fetch function for testing
-async function fetchQuotesFromServer() {
-    try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
-        const data = await response.json();
-        return data.map(item => ({
-            text: item.body,
-            author: item.title,
-            category: 'Fetched Category'
-        }));
-    } catch (error) {
-        console.error('Error fetching quotes:', error);
-        return [];
-    }
-}
+// 
 
 class Quote {
     constructor(text, author, category) {
