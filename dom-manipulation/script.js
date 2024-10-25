@@ -13,7 +13,6 @@
 //         return [];
 //     }
 // }
-
 class Quote {
     constructor(text, author, category) {
         this.id = Date.now() + Math.random().toString(36).substr(2, 9);
@@ -240,6 +239,13 @@ class QuoteManager {
                 </footer>
             </blockquote>
         `).join('');
+    }
+
+    syncQuotes() {
+        // Sync quotes from local storage to the server
+        this.quotes.forEach(quote => {
+            this.postQuoteToServer(quote);
+        });
     }
 }
 
