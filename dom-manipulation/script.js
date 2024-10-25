@@ -1,3 +1,19 @@
+// Standalone fetch function for testing
+async function fetchQuotesFromServer() {
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
+        const data = await response.json();
+        return data.map(item => ({
+            text: item.body,
+            author: item.title,
+            category: 'Fetched Category'
+        }));
+    } catch (error) {
+        console.error('Error fetching quotes:', error);
+        return [];
+    }
+}
+
 class Quote {
     constructor(text, author, category) {
         this.id = Date.now() + Math.random().toString(36).substr(2, 9);
@@ -11,11 +27,10 @@ class Quote {
 class QuoteManager {
     constructor() {
         this.quotes = this.loadFromLocalStorage() || [];
-        this.createAddQuoteForm();
         this.populateCategories();
         this.initializeEventListeners();
         this.showRandomQuote();
-        this.startPeriodicFetching(); // Start periodic fetching of quotes
+        this.startPeriodicFetching();
     }
 
     loadFromLocalStorage() {
@@ -33,7 +48,7 @@ class QuoteManager {
         this.saveToLocalStorage();
         this.showRandomQuote();
         this.populateCategories();
-        this.postQuoteToServer(newQuote); // Post the new quote to the server
+        this.postQuoteToServer(newQuote);
     }
 
     showRandomQuote() {
@@ -70,70 +85,106 @@ class QuoteManager {
         }
     }
 
-    createAddQuoteForm() {
-        const formContainer = document.createElement('div');
-
-        formContainer.innerHTML = `
-            <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
-            <input id="quote-author" type="text" placeholder="Enter author name" />
-            <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-            <button id="addQuoteBtn">Add Quote</button>
-        `;
-
-        document.body.appendChild(formContainer);
-    }
-
     initializeEventListeners() {
         const newQuoteBtn = document.getElementById('newQuote');
-        newQuoteBtn.addEventListener('click', () => {
-            this.showRandomQuote();
-        });
+        if (newQuoteBtn) {
+            newQuoteBtn.addEventListener('click', () => {
+                this.showRandomQuote();
+            });
+        }
 
         const addQuoteBtn = document.getElementById('addQuoteBtn');
-        addQuoteBtn.addEventListener('click', () => {
-            const text = document.getElementById('newQuoteText').value.trim();
-            const author = document.getElementById('quote-author').value.trim();
-            const category = document.getElementById('newQuoteCategory').value.trim();
+        if (addQuoteBtn) {
+            addQuoteBtn.addEventListener('click', () => {
+                const text = document.getElementById('newQuoteText').value.trim();
+                const author = document.getElementById('quote-author').value.trim();
+                const category = document.getElementById('newQuoteCategory').value.trim();
 
-            this.addQuote(text, author, category);
+                if (text) {
+                    this.addQuote(text, author, category);
 
-            // Clear input fields
-            document.getElementById('newQuoteText').value = '';
-            document.getElementById('quote-author').value = '';
-            document.getElementById('newQuoteCategory').value = '';
-        });
+                    // Clear input fields
+                    document.getElementById('newQuoteText').value = '';
+                    document.getElementById('quote-author').value = '';
+                    document.getElementById('newQuoteCategory').value = '';
+                }
+            });
+        }
 
         const categorySelect = document.getElementById('categoryFilter');
-        categorySelect.addEventListener('change', (event) => {
-            const selectedCategory = event.target.value;
-            this.renderQuotes(selectedCategory);
-        });
+        if (categorySelect) {
+            categorySelect.addEventListener('change', (event) => {
+                const selectedCategory = event.target.value;
+                this.filterQuotes(selectedCategory);
+            });
+        }
 
         const importBtn = document.getElementById('import-btn');
-        importBtn.addEventListener('click', () => {
-            document.getElementById('importFile').click();
-        });
+        if (importBtn) {
+            importBtn.addEventListener('click', () => {
+                const importFile = document.getElementById('importFile');
+                if (importFile) {
+                    importFile.click();
+                }
+            });
+        }
+
+        const importFile = document.getElementById('importFile');
+        if (importFile) {
+            importFile.addEventListener('change', (event) => {
+                this.importFromJsonFile(event);
+            });
+        }
 
         const exportBtn = document.getElementById('export-btn');
-        exportBtn.addEventListener('click', () => {
-            this.exportQuotesToJson();
-        });
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportQuotesToJson();
+            });
+        }
+    }
+
+    filterQuotes(category) {
+        if (category === 'all') {
+            this.showRandomQuote();
+            return;
+        }
+
+        const filteredQuotes = this.quotes.filter(quote => quote.category === category);
+        const quoteDisplay = document.getElementById('quoteDisplay');
+        
+        if (filteredQuotes.length === 0) {
+            quoteDisplay.innerHTML = '<p>No quotes found in this category.</p>';
+            return;
+        }
+
+        const randomQuote = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
+        quoteDisplay.innerHTML = `
+            <blockquote>
+                <p>${randomQuote.text}</p>
+                <footer>
+                    ${randomQuote.author || 'Unknown'}
+                    <span class="category">${randomQuote.category}</span>
+                </footer>
+            </blockquote>
+        `;
     }
 
     async fetchQuotesFromServer() {
         try {
-            const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
-            const data = await response.json();
-            const fetchedQuotes = data.map(item => new Quote(item.body, item.title, 'Fetched Category'));
+            const fetchedQuotesData = await fetchQuotesFromServer(); // Using the standalone function
+            const fetchedQuotes = fetchedQuotesData.map(item => 
+                new Quote(item.text, item.author, item.category)
+            );
 
             // Update local quotes and handle conflicts
             fetchedQuotes.forEach(fetchedQuote => {
-                const existingQuoteIndex = this.quotes.findIndex(quote => quote.text === fetchedQuote.text && quote.author === fetchedQuote.author);
+                const existingQuoteIndex = this.quotes.findIndex(quote => 
+                    quote.text === fetchedQuote.text && quote.author === fetchedQuote.author
+                );
                 if (existingQuoteIndex !== -1) {
-                    // Conflict detected: overwrite the existing quote with the fetched one
                     this.quotes[existingQuoteIndex] = fetchedQuote;
                 } else {
-                    // If the quote doesn't exist locally, add it
                     this.quotes.push(fetchedQuote);
                 }
             });
@@ -141,8 +192,18 @@ class QuoteManager {
             this.saveToLocalStorage();
             this.populateCategories();
             this.showRandomQuote();
+
+            // Update fetch status
+            const fetchStatus = document.getElementById('fetchStatus');
+            if (fetchStatus) {
+                fetchStatus.textContent = `Last fetched: ${new Date().toLocaleTimeString()}`;
+            }
         } catch (error) {
             console.error('Error fetching quotes:', error);
+            const fetchStatus = document.getElementById('fetchStatus');
+            if (fetchStatus) {
+                fetchStatus.textContent = `Error fetching quotes: ${error.message}`;
+            }
         }
     }
 
@@ -154,9 +215,9 @@ class QuoteManager {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    title: quote.author, // Using the author as title for the mock API
-                    body: quote.text, // Using the quote text as body
-                    category: quote.category, // You can customize this as per your requirement
+                    title: quote.author,
+                    body: quote.text,
+                    category: quote.category,
                 }),
             });
             const result = await response.json();
@@ -168,7 +229,7 @@ class QuoteManager {
 
     startPeriodicFetching() {
         setInterval(() => {
-            this.fetchQuotesFromServer(); // Fetch new quotes every 10 seconds
+            this.fetchQuotesFromServer();
         }, 10000);
     }
 
