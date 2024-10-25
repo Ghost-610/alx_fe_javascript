@@ -241,11 +241,10 @@ class QuoteManager {
         `).join('');
     }
 
-    syncQuotes() {
+    async syncQuotes() {
         // Sync quotes from local storage to the server
-        this.quotes.forEach(quote => {
-            this.postQuoteToServer(quote);
-        });
+        await Promise.all(this.quotes.map(quote => this.postQuoteToServer(quote)));
+        alert("Quotes synced with server!"); // Add success message after syncing
     }
 }
 
